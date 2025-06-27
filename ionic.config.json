@@ -1,0 +1,7 @@
+{
+  "name": "pb-mobile",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
