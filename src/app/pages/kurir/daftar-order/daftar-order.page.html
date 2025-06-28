@@ -1,0 +1,42 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Order Tersedia</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div *ngIf="isLoading && availableOrders.length === 0" class="ion-text-center ion-padding">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Mencari order...</p>
+  </div>
+
+  <div *ngIf="!isLoading && availableOrders.length === 0" class="ion-text-center ion-padding">
+    <p>Tidak ada order yang tersedia saat ini.</p>
+  </div>
+
+  <ion-list *ngIf="availableOrders.length > 0">
+    <ion-card *ngFor="let order of availableOrders">
+      <ion-card-header>
+        <ion-card-subtitle>Order Baru</ion-card-subtitle>
+        <ion-card-title>Pengiriman ke {{ order.nama_penerima }}</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p><strong>Alamat Tujuan:</strong> {{ order.alamat_tujuan }}</p>
+        <p><strong>Jenis Barang:</strong> {{ order.jenis_barang }}</p>
+        <p><strong>Dari:</strong> {{ order.pelanggan.name }}</p>
+
+        <ion-button 
+          expand="block" 
+          class="ion-margin-top" 
+          (click)="confirmTakeOrder(order.id)">
+          <ion-icon name="paper-plane-outline" slot="start"></ion-icon>
+          Ambil Tugas
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+  </ion-list>
+</ion-content>

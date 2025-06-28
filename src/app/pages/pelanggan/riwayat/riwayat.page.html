@@ -1,0 +1,36 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Riwayat Pengiriman</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div *ngIf="isLoading && riwayatPengiriman.length === 0" class="ion-text-center ion-padding">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Memuat data...</p>
+  </div>
+
+  <div *ngIf="!isLoading && riwayatPengiriman.length === 0" class="ion-text-center ion-padding">
+    <p>Anda belum pernah melakukan pengiriman.</p>
+  </div>
+
+  <ion-list *ngIf="riwayatPengiriman.length > 0">
+    <ion-card *ngFor="let item of riwayatPengiriman" button (click)="goToDetail(item.id)">
+      <ion-card-header>
+        <ion-card-subtitle>{{ item.created_at | date:'dd MMMM yyyy, HH:mm' }}</ion-card-subtitle>
+        <ion-card-title>{{ item.nomor_resi }}</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p>Tujuan: <strong>{{ item.nama_penerima }}</strong></p>
+        <p>{{ item.alamat_tujuan }}</p>
+        <ion-chip [color]="item.status_pengiriman === 'Sampai Tujuan' ? 'success' : 'primary'" class="ion-margin-top">
+          <ion-label>{{ item.status_pengiriman }}</ion-label>
+        </ion-chip>
+      </ion-card-content>
+    </ion-card>
+  </ion-list>
+</ion-content>

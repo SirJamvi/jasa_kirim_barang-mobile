@@ -1,0 +1,91 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Lacak Kiriman</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div *ngIf="pengirimanDetail">
+    <ion-list-header>Pembayaran</ion-list-header>
+
+    <ion-card>
+      <ion-card-content>
+        <p>Total Biaya: <strong>Rp {{ pengirimanDetail.total_biaya | number }}</strong></p>
+        <p>Silakan lakukan pembayaran ke rekening berikut:</p>
+        <p><strong>Bank ABC - 1234567890 a/n Sistem Jasa Kirim</strong></p>
+
+        <!-- Jika belum ada bukti pembayaran -->
+        <div *ngIf="!pengirimanDetail.bukti_pembayaran">
+          <ion-button 
+            expand="block" 
+            class="ion-margin-top" 
+            (click)="pilihFile()"
+            [attr.aria-label]="'Upload bukti pembayaran'">
+            <ion-icon name="cloud-upload-outline" slot="start" aria-hidden="true"></ion-icon>
+            Upload Bukti Bayar
+          </ion-button>
+
+          <!-- Input file tersembunyi -->
+          <input 
+            type="file" 
+            #fileInput 
+            style="display: none;" 
+            (change)="onFileSelected($event)" 
+            accept="image/*"
+            aria-label="Pilih file bukti pembayaran"
+          >
+        </div>
+
+        <!-- Jika sudah ada bukti pembayaran -->
+        <div *ngIf="pengirimanDetail.bukti_pembayaran">
+          <ion-chip color="success" class="ion-margin-top">
+            <ion-icon name="checkmark-circle" slot="start" aria-hidden="true"></ion-icon>
+            <ion-label>
+              Bukti sudah diunggah (Status: {{ pengirimanDetail.bukti_pembayaran.status }})
+            </ion-label>
+          </ion-chip>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-list-header>Pelacakan Lokasi</ion-list-header>
+    <div 
+      id="map" 
+      style="height: 300px;"
+      role="img"
+      [attr.aria-label]="'Peta lokasi pengiriman'">
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="!pengirimanDetail" class="ion-text-center ion-padding">
+    <ion-spinner></ion-spinner>
+    <p>Memuat detail pengiriman...</p>
+  </div>
+</ion-content>
+
+<style>
+  #map {
+    width: 100%;
+    height: 300px;
+    margin: 16px 0;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background: #f0f0f0;
+  }
+
+  .leaflet-container {
+    border-radius: 10px;
+  }
+
+  /* Loading placeholder untuk map */
+  #map:empty::before {
+    content: 'Memuat peta...';
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #666;
+    font-style: italic;
+  }
+</style>

@@ -1,0 +1,269 @@
+ion-content {
+  --padding-top: 0;
+  --padding-bottom: 0;
+}
+
+.map-container {
+  position: relative;
+  height: 250px;
+  width: 100%;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--ion-color-light);
+  
+  #map-buat-kiriman {
+    height: 100%;
+    width: 100%;
+    min-height: 250px;
+    background: var(--ion-color-light);
+    
+    .leaflet-container {
+      height: 100% !important;
+      width: 100% !important;
+      font-family: var(--ion-font-family);
+    }
+    
+    .leaflet-control-zoom {
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .leaflet-control-zoom a {
+      background: var(--ion-color-primary);
+      color: white;
+      border: none;
+      width: 32px;
+      height: 32px;
+      line-height: 32px;
+      
+      &:hover {
+        background: var(--ion-color-primary-shade);
+      }
+    }
+  }
+}
+
+.distance-info {
+  margin-bottom: 16px;
+  
+  ion-card {
+    margin: 0;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    
+    ion-card-content {
+      padding: 16px;
+      
+      .distance-display {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 16px;
+        font-weight: 500;
+        
+        ion-icon {
+          font-size: 24px;
+        }
+        
+        strong {
+          color: var(--ion-color-primary);
+          font-size: 18px;
+        }
+      }
+    }
+  }
+}
+
+.distance-warning {
+  margin-bottom: 16px;
+  
+  ion-card {
+    margin: 0;
+    border-radius: 12px;
+    
+    ion-card-content {
+      padding: 16px;
+      
+      .warning-display {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        
+        ion-icon {
+          font-size: 20px;
+        }
+      }
+    }
+  }
+}
+
+// Form styling
+form {
+  ion-list {
+    background: transparent;
+    
+    ion-list-header {
+      padding-left: 0;
+      padding-right: 0;
+      font-weight: 600;
+      color: var(--ion-color-primary);
+      font-size: 16px;
+      margin-top: 24px;
+      margin-bottom: 16px;
+      
+      &:first-child {
+        margin-top: 0;
+      }
+    }
+    
+    ion-item.form-item {
+      --inner-padding-end: 16px;
+      --padding-start: 16px;
+      --inner-padding-top: 16px;
+      --inner-padding-bottom: 16px;
+      --border-radius: 12px;
+      --background: var(--ion-color-light);
+      margin-bottom: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      
+      ion-label {
+        font-weight: 500;
+        margin-left: 4px;
+        margin-bottom: 8px;
+        font-size: 16px;
+        
+        &[position="floating"] {
+          transform-origin: left top;
+          transition: all 0.2s ease;
+        }
+      }
+      
+      ion-input, ion-textarea, ion-select {
+        --padding-start: 12px;
+        --padding-end: 12px;
+        --padding-top: 12px;
+        --padding-bottom: 12px;
+        font-size: 16px;
+        min-height: 56px;
+      }
+      
+      ion-textarea {
+        min-height: 100px;
+      }
+      
+      // Estimasi total biaya styling
+      &.total-cost {
+        --background: var(--ion-color-primary-tint);
+        border: 1px solid var(--ion-color-primary);
+        margin-top: 24px;
+        margin-bottom: 16px;
+        
+        ion-label {
+          h2 {
+            color: white;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            font-size: 18px;
+          }
+          
+          .cost-amount {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin: 0 0 4px 0;
+          }
+          
+          .cost-breakdown {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            margin: 0;
+          }
+        }
+      }
+    }
+  }
+  
+  ion-button.submit-button {
+    --border-radius: 16px;
+    --padding-top: 24px;
+    --padding-bottom: 24px;
+    font-weight: 600;
+    font-size: 18px;
+    margin-top: 24px;
+    margin-bottom: 32px;
+    height: 60px;
+    
+    ion-icon {
+      margin-right: 12px;
+      font-size: 24px;
+    }
+    
+    &[disabled] {
+      --opacity: 0.5;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .map-container {
+    height: 200px;
+    margin-bottom: 12px;
+    
+    #map-buat-kiriman {
+      min-height: 200px;
+    }
+  }
+  
+  .distance-info, .distance-warning {
+    margin-bottom: 12px;
+  }
+  
+  form ion-list ion-item {
+    margin-bottom: 16px;
+    --inner-padding-top: 14px;
+    --inner-padding-bottom: 14px;
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .map-container {
+    border-color: var(--ion-color-dark);
+    
+    #map-buat-kiriman {
+      background: var(--ion-color-dark);
+    }
+  }
+
+  ion-item.form-item {
+    --background: var(--ion-color-dark-shade);
+  }
+}
+
+// Loading state untuk map
+.map-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 250px;
+  background: var(--ion-color-light);
+  border-radius: 12px;
+  
+  ion-spinner {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 16px;
+  }
+  
+  p {
+    font-size: 16px;
+    color: var(--ion-color-medium);
+  }
+}

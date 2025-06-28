@@ -1,0 +1,65 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Tugas Saya</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div *ngIf="isLoading && myTasks.length === 0" class="ion-text-center ion-padding">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Memuat data...</p>
+  </div>
+
+  <div *ngIf="!isLoading && myTasks.length === 0" class="ion-text-center ion-padding">
+    <p>Anda belum memiliki tugas pengiriman.</p>
+  </div>
+
+  <ion-list *ngIf="myTasks.length > 0">
+    <ion-list-header>
+      <ion-label>Tugas Aktif</ion-label>
+    </ion-list-header>
+    <ng-container *ngFor="let task of myTasks">
+      <ion-card *ngIf="task.status_pengiriman !== 'Sampai Tujuan'" button (click)="goToTaskDetail(task.id)">
+        <ion-card-header>
+          <ion-card-subtitle>{{ task.nomor_resi }}</ion-card-subtitle>
+          <ion-card-title>Kirim ke {{ task.nama_penerima }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p>{{ task.alamat_tujuan }}</p>
+          <ion-chip color="warning" class="ion-margin-top">
+            <ion-label>{{ task.status_pengiriman }}</ion-label>
+          </ion-chip>
+        </ion-card-content>
+      </ion-card>
+    </ng-container>
+    
+    <ion-list-header>
+      <ion-label>Tugas Selesai</ion-label>
+    </ion-list-header>
+     <ng-container *ngFor="let task of myTasks">
+      <ion-card *ngIf="task.status_pengiriman === 'Sampai Tujuan'" class="task-completed">
+        <ion-card-header>
+          <ion-card-subtitle>{{ task.nomor_resi }}</ion-card-subtitle>
+          <ion-card-title>Kirim ke {{ task.nama_penerima }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+           <ion-chip color="success">
+            <ion-icon name="checkmark-circle"></ion-icon>
+            <ion-label>Selesai</ion-label>
+          </ion-chip>
+        </ion-card-content>
+      </ion-card>
+    </ng-container>
+  </ion-list>
+</ion-content>
+
+<style>
+  .task-completed {
+    --background: #f0f0f0;
+    opacity: 0.7;
+  }
+</style>
