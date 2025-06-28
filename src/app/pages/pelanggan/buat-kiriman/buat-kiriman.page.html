@@ -1,0 +1,300 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Buat Pengiriman Baru</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Peta Leaflet -->
+  <div class="map-container">
+    <div id="map-buat-kiriman"></div>
+    <div class="map-loading" *ngIf="!leafletLoaded">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Memuat peta...</p>
+    </div>
+  </div>
+
+  <!-- Estimasi Jarak -->
+  <div *ngIf="jarak > 0" class="distance-info">
+    <ion-card>
+      <ion-card-content>
+        <div class="distance-display">
+          <ion-icon name="location-outline" color="primary"></ion-icon>
+          <span>Estimasi Jarak: <strong>{{ jarak.toFixed(2) }} km</strong></span>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Pesan jika jarak belum dihitung -->
+  <div *ngIf="jarak === 0" class="distance-warning">
+    <ion-card color="warning">
+      <ion-card-content>
+        <div class="warning-display">
+          <ion-icon name="warning-outline"></ion-icon>
+          <span>Silakan pilih lokasi tujuan di peta untuk menghitung jarak</span>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Formulir Kiriman -->
+  <form [formGroup]="kirimanForm" (ngSubmit)="buatKiriman()">
+    <ion-list>
+      <ion-list-header>
+        <ion-label>Informasi Penerima</ion-label>
+      </ion-list-header>
+
+      <ion-item class="form-item">
+        <ion-label position="floating">Nama Penerima</ion-label>
+        <ion-input 
+          type="text" 
+          formControlName="nama_penerima"
+          placeholder="Masukkan nama penerima"
+          [class.ion-invalid]="kirimanForm.get('nama_penerima')?.touched && kirimanForm.get('nama_penerima')?.errors"
+        ></ion-input>
+      </ion-item>
+      
+      <ion-item class="form-item">
+        <ion-label position="floating">Telepon Penerima</ion-label>
+        <ion-input 
+          type="tel" 
+          formControlName="telepon_penerima"
+          placeholder="Contoh: 08123456789"
+          [class.ion-invalid]="kirimanForm.get('telepon_penerima')?.touched && kirimanForm.get('telepon_penerima')?.errors"
+        ></ion-input>
+      </ion-item>
+
+      <ion-item class="form-item">
+        <ion-label position="floating">Alamat Lengkap Tujuan</ion-label>
+        <ion-textarea 
+          formControlName="alamat_tujuan"
+          placeholder="Masukkan alamat lengkap tujuan"
+          rows="3"
+          [class.ion-invalid]="kirimanForm.get('alamat_tujuan')?.touched && kirimanForm.get('alamat_tujuan')?.errors"
+        ></ion-textarea>
+      </ion-item>
+
+      <ion-list-header>
+        <ion-label>Informasi Barang</ion-label>
+      </ion-list-header>
+
+      <ion-item class="form-item">
+        <ion-label position="floating">Jenis Barang</ion-label>
+        <ion-input 
+          type="text" 
+          formControlName="jenis_barang"
+          placeholder="Contoh: Elektronik, Pakaian, Dokumen"
+          [class.ion-invalid]="kirimanForm.get('jenis_barang')?.touched && kirimanForm.get('jenis_barang')?.errors"
+        ></ion-input>
+      </ion-item>
+
+      <ion-item class="form-item">
+        <ion-label position="floating">Estimasi Berat (kg)</ion-label>
+        <ion-input 
+          type="number" 
+          formControlName="estimasi_berat"
+          placeholder="0.0"
+          step="0.1"
+          min="0.1"
+          max="1000"
+          [class.ion-invalid]="kirimanForm.get('estimasi_berat')?.touched && kirimanForm.get('estimasi_berat')?.errors"
+        ></ion-input>
+      </ion-item>
+
+      <ion-item class="form-item">
+        <ion-label>Jenis Layanan</ion-label>
+        <ion-select 
+          formControlName="tarif_id" 
+          placeholder="Pilih Layanan"
+          interface="popover"
+          [class.ion-invalid]="kirimanForm.get('tarif_id')?.touched && kirimanForm.get('tarif_id')?.errors"
+        >
+          <ion-select-option *ngFor="let tarif of tarifs" [value]="tarif.id">
+            {{ tarif.jenis_layanan }} (Rp {{ formatCurrency(tarif.tarif_per_km) }}/km/kg)
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <!-- Estimasi Total Biaya -->
+      <ion-item *ngIf="estimasiTotal > 0" class="total-cost">
+        <ion-label>
+          <h2>Estimasi Total Biaya</h2>
+          <h1 class="cost-amount">Rp {{ formatCurrency(estimasiTotal) }}</h1>
+          <p class="cost-breakdown">{{ jarak.toFixed(2) }} km × {{ kirimanForm.get('estimasi_berat')?.value }} kg</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+
+    <ion-button 
+      expand="block" 
+      type="submit" 
+      class="ion-margin-top submit-button" 
+      [disabled]="kirimanForm.invalid || jarak === 0"
+    >
+      <ion-icon name="send-outline" slot="start"></ion-icon>
+      Buat Order
+    </ion-button>
+  </form>
+</ion-content>
+
+<style>
+  .map-container {
+    position: relative;
+    height: 250px;
+    width: 100%;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 2px solid var(--ion-color-light);
+  }
+  
+  #map-buat-kiriman {
+    height: 100%;
+    width: 100%;
+    min-height: 250px;
+    background: #f8f9fa;
+  }
+
+  .map-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 8px;
+  }
+
+  .map-loading p {
+    margin-top: 10px;
+    color: var(--ion-color-medium);
+    font-size: 14px;
+  }
+  
+  .distance-info {
+    margin-bottom: 16px;
+  }
+  
+  .distance-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    color: var(--ion-color-primary);
+  }
+  
+  .distance-warning {
+    margin-bottom: 16px;
+  }
+  
+  .warning-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--ion-color-warning);
+  }
+  
+  ion-list-header {
+    font-weight: 600;
+    color: var(--ion-color-primary);
+    background: var(--ion-color-light);
+    margin-top: 16px;
+    border-radius: 8px;
+  }
+  
+  ion-item.form-item {
+    --inner-padding-end: 12px;
+    --padding-start: 12px;
+    --inner-padding-top: 12px;
+    --inner-padding-bottom: 12px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    background: var(--ion-color-light);
+  }
+
+  ion-item.ion-invalid {
+    --border-color: var(--ion-color-danger);
+  }
+
+  ion-input, ion-textarea, ion-select {
+    --padding-start: 12px;
+    --padding-end: 12px;
+    --padding-top: 8px;
+    --padding-bottom: 8px;
+    font-size: 16px;
+  }
+
+  ion-label[position="floating"] {
+    margin-left: 12px;
+    margin-bottom: 8px;
+  }
+
+  .total-cost {
+    background: linear-gradient(135deg, var(--ion-color-primary-tint), var(--ion-color-primary));
+    color: white;
+    margin: 24px 0;
+    border-radius: 16px;
+    --inner-padding-top: 20px;
+    --inner-padding-bottom: 20px;
+  }
+
+  .cost-amount {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 12px 0;
+  }
+
+  .cost-breakdown {
+    opacity: 0.8;
+    font-size: 14px;
+    margin-top: 8px;
+  }
+  
+  .submit-button {
+    --border-radius: 16px;
+    margin: 24px 0;
+    height: 56px;
+    font-weight: 600;
+    font-size: 18px;
+    --padding-top: 20px;
+    --padding-bottom: 20px;
+  }
+
+  .submit-button[disabled] {
+    opacity: 0.5;
+  }
+  
+  .leaflet-container {
+    font-family: inherit;
+  }
+
+  .leaflet-popup-content-wrapper {
+    border-radius: 8px;
+  }
+
+  .leaflet-popup-tip {
+    background: white;
+  }
+
+  /* Custom Alert Styling */
+  .custom-alert .alert-wrapper {
+    border-radius: 12px;
+  }
+
+  /* Form validation styling */
+  ion-input.ion-invalid,
+  ion-textarea.ion-invalid,
+  ion-select.ion-invalid {
+    --highlight-color: var(--ion-color-danger);
+  }
+
+  /* Loading spinner customization */
+  ion-spinner {
+    --color: var(--ion-color-primary);
+  }
+</style>
