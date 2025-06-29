@@ -45,7 +45,7 @@
       </ion-item>
     </ion-list>
 
-    <!-- ✅ Bukti pengiriman -->
+    <!-- ✅ Bukti pengiriman - Updated sesuai permintaan -->
     <div *ngIf="hasBuktiKirim()">
       <ion-list-header>Bukti Pengiriman</ion-list-header>
       <ion-card>
@@ -125,7 +125,7 @@
         canUploadBukti: {{ canUploadBukti() }}<br>
         hasBuktiKirim: {{ hasBuktiKirim() }}<br>
         status: {{ taskDetail?.status_pengiriman }}<br>
-        bukti_kirim_path: {{ taskDetail?.bukti_kirim_path }}<br>
+        bukti_kirim: {{ taskDetail?.bukti_kirim }}<br>
         bukti_kirim_url: {{ taskDetail?.bukti_kirim }}
       </div>
     </div>

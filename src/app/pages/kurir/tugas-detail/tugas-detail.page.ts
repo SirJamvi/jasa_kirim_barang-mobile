@@ -240,7 +240,8 @@ export class TugasDetailPage implements OnInit {
   }
 
   hasBuktiKirim(): boolean {
-    return this.taskDetail && !!this.taskDetail.bukti_kirim_path;
+    // ✅ SOLUSI: Sesuaikan agar konsisten
+    return this.taskDetail && !!this.taskDetail.bukti_kirim;
   }
 
   async showAlert(header: string, message: string) {

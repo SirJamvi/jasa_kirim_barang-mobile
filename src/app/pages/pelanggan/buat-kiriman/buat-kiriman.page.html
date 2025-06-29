@@ -126,6 +126,42 @@
       </ion-item>
     </ion-list>
 
+    <div *ngIf="estimasiTotal > 0" class="payment-section">
+    <ion-list-header>Informasi Pembayaran</ion-list-header>
+
+    <ion-card class="payment-card">
+      <ion-card-content>
+        <p>Total Biaya: <strong>Rp {{ formatCurrency(estimasiTotal) }}</strong></p>
+        <p>Transfer ke rekening:</p>
+        <p><strong>Bank ABC - 1234567890 a/n Sistem Jasa Kirim</strong></p>
+
+        <ion-button 
+          expand="block" 
+          fill="outline"
+          class="ion-margin-top"
+          (click)="pilihFile()"
+          [disabled]="kirimanForm.invalid || jarak === 0">
+          <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
+          Upload Bukti Bayar
+        </ion-button>
+
+        <input 
+          type="file" 
+          #fileInput 
+          style="display: none;" 
+          (change)="onFileSelected($event)" 
+          accept="image/*">
+
+        <div *ngIf="selectedFile" class="file-info">
+          <ion-chip color="success">
+            <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+            <ion-label>{{ selectedFile.name }}</ion-label>
+          </ion-chip>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
     <ion-button 
       expand="block" 
       type="submit" 
@@ -136,6 +172,9 @@
       Buat Order
     </ion-button>
   </form>
+
+  <!-- ✅ TAMBAHAN: Informasi Pembayaran -->
+  
 </ion-content>
 
 <style>
