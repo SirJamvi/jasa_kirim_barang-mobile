@@ -1,6 +1,6 @@
 // src/app/pages/pelanggan/buat-kiriman/buat-kiriman.page.ts
 
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertController, LoadingController } from '@ionic/angular';
@@ -32,6 +32,10 @@ export class BuatKirimanPage implements OnInit, OnDestroy {
   private defaultLat = -6.2088;
   private defaultLng = 106.8456;
 
+  // Tambahkan properties untuk upload file
+  @ViewChild('fileInput') fileInput!: ElementRef;
+  selectedFile: File | null = null;
+
   constructor(
     private fb: FormBuilder,
     private apiService: ApiService,
@@ -62,7 +66,6 @@ export class BuatKirimanPage implements OnInit, OnDestroy {
   }
 
   private setupFormValueChanges() {
-    // Hitung ulang estimasi total ketika form berubah
     this.kirimanForm.valueChanges.subscribe(() => {
       this.calculateEstimation();
     });
@@ -81,14 +84,33 @@ export class BuatKirimanPage implements OnInit, OnDestroy {
     }
   }
 
+  private loadLeafletLibrary(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (typeof L !== 'undefined') {
+        this.leafletLoaded = true;
+        resolve();
+        return;
+      }
+      const cssLink = document.createElement('link');
+      cssLink.rel = 'stylesheet';
+      cssLink.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(cssLink);
+
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.onload = () => {
+        this.leafletLoaded = true;
+        resolve();
+      };
+      script.onerror = () => reject(new Error('Failed to load Leaflet library'));
+      document.head.appendChild(script);
+    });
+  }
+
   private async loadLeafletAndInitializeMap() {
     try {
-      // Load Leaflet library if not already loaded
       await this.loadLeafletLibrary();
-      
-      // Wait for DOM to be ready
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise(res => setTimeout(res, 500));
       await this.initializeMap();
     } catch (error) {
       console.error('Error loading Leaflet or initializing map:', error);
@@ -96,158 +118,64 @@ export class BuatKirimanPage implements OnInit, OnDestroy {
     }
   }
 
-  private loadLeafletLibrary(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      // Check if Leaflet is already loaded
-      if (typeof L !== 'undefined') {
-        this.leafletLoaded = true;
-        resolve();
-        return;
-      }
-
-      // Load Leaflet CSS
-      const cssLink = document.createElement('link');
-      cssLink.rel = 'stylesheet';
-      cssLink.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(cssLink);
-
-      // Load Leaflet JS
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.onload = () => {
-        this.leafletLoaded = true;
-        resolve();
-      };
-      script.onerror = () => {
-        reject(new Error('Failed to load Leaflet library'));
-      };
-      document.head.appendChild(script);
-    });
-  }
-
   private async initializeMap() {
-    try {
-      if (!this.leafletLoaded || typeof L === 'undefined') {
-        throw new Error('Leaflet library not loaded');
-      }
+    if (!this.leafletLoaded || typeof L === 'undefined') throw new Error('Leaflet library not loaded');
+    const container = document.getElementById('map-buat-kiriman');
+    if (!container) throw new Error('Map container not found');
 
-      // Check if map container exists
-      const mapContainer = document.getElementById('map-buat-kiriman');
-      if (!mapContainer) {
-        throw new Error('Map container not found');
-      }
+    this.map = L.map('map-buat-kiriman').setView([this.defaultLat, this.defaultLng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(this.map);
 
-      // Initialize map
-      this.map = L.map('map-buat-kiriman').setView([this.defaultLat, this.defaultLng], 13);
+    this.startMarker = L.marker([-6.3204, 107.3236])
+      .addTo(this.map)
+      .bindPopup('Lokasi Awal').openPopup();
 
-      // Add tile layer
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
-      }).addTo(this.map);
-
-      // Add start marker (default location - could be user's current location)
-      this.startMarker = L.marker([this.defaultLat, this.defaultLng])
-        .addTo(this.map)
-        .bindPopup('Lokasi Awal')
-        .openPopup();
-
-      // Add click event to set destination
-      this.map.on('click', (e: any) => {
-        this.setDestination(e.latlng.lat, e.latlng.lng);
-      });
-
-      // Try to get user's current location
-      this.getCurrentLocation();
-
-      console.log('Map initialized successfully');
-
-    } catch (error) {
-      console.error('Error initializing map:', error);
-      throw error;
-    }
+    this.map.on('click', (e: any) => this.setDestination(e.latlng.lat, e.latlng.lng));
+    this.getCurrentLocation();
   }
 
   private getCurrentLocation() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          
-          // Update start marker with current location
-          if (this.startMarker && this.map) {
-            this.startMarker.setLatLng([lat, lng]);
-            this.map.setView([lat, lng], 15);
-            this.startMarker.bindPopup('Lokasi Anda').openPopup();
-          }
+        pos => {
+          const { latitude: lat, longitude: lng } = pos.coords;
+          this.startMarker.setLatLng([lat, lng]);
+          this.map.setView([lat, lng], 15);
+          this.startMarker.bindPopup('Lokasi Anda').openPopup();
         },
-        (error) => {
-          console.log('Geolocation error:', error);
-          // Keep using default location
-        },
-        {
-          timeout: 10000,
-          enableHighAccuracy: true,
-          maximumAge: 300000
-        }
+        err => console.log('Geolocation error:', err),
+        { timeout: 10000, enableHighAccuracy: true, maximumAge: 300000 }
       );
     }
   }
 
   private setDestination(lat: number, lng: number) {
     if (!this.map) return;
+    if (this.endMarker) this.map.removeLayer(this.endMarker);
+    if (this.routeControl) this.map.removeLayer(this.routeControl);
 
-    // Remove existing end marker
-    if (this.endMarker) {
-      this.map.removeLayer(this.endMarker);
-    }
-
-    // Remove existing route
-    if (this.routeControl) {
-      this.map.removeLayer(this.routeControl);
-    }
-
-    // Add new end marker
-    this.endMarker = L.marker([lat, lng])
-      .addTo(this.map)
-      .bindPopup('Tujuan')
-      .openPopup();
-
-    // Calculate distance
+    this.endMarker = L.marker([lat, lng]).addTo(this.map).bindPopup('Tujuan').openPopup();
     this.calculateDistance();
   }
 
   private calculateDistance() {
-    if (this.startMarker && this.endMarker) {
-      const startLatLng = this.startMarker.getLatLng();
-      const endLatLng = this.endMarker.getLatLng();
-      
-      // Calculate straight line distance (Haversine formula)
-      const distance = this.getDistanceFromLatLonInKm(
-        startLatLng.lat, startLatLng.lng,
-        endLatLng.lat, endLatLng.lng
-      );
-      
-      this.jarak = distance;
-      this.calculateEstimation();
-
-      // Add route visualization
-      this.addRoute(startLatLng, endLatLng);
-    }
+    if (!this.startMarker || !this.endMarker) return;
+    const s = this.startMarker.getLatLng();
+    const e = this.endMarker.getLatLng();
+    this.jarak = this.getDistanceFromLatLonInKm(s.lat, s.lng, e.lat, e.lng);
+    this.calculateEstimation();
+    this.addRoute(s, e);
   }
 
   private getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371; // Radius of the earth in km
+    const R = 6371;
     const dLat = this.deg2rad(lat2 - lat1);
     const dLon = this.deg2rad(lon2 - lon1);
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    const d = R * c; // Distance in km
-    return d;
+    const a = Math.sin(dLat/2)**2 + Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   }
 
   private deg2rad(deg: number): number {
@@ -255,123 +183,93 @@ export class BuatKirimanPage implements OnInit, OnDestroy {
   }
 
   private addRoute(start: any, end: any) {
-    if (!this.map) return;
-
-    // Remove existing route
-    if (this.routeControl) {
-      this.map.removeLayer(this.routeControl);
-    }
-
-    // Simple polyline connection (for basic routing)
-    this.routeControl = L.polyline([
-      [start.lat, start.lng],
-      [end.lat, end.lng]
-    ], {
-      color: 'blue',
-      weight: 4,
-      opacity: 0.7,
-      dashArray: '10, 5'
-    }).addTo(this.map);
-
-    // Fit map to show entire route
+    if (this.routeControl) this.map.removeLayer(this.routeControl);
+    this.routeControl = L.polyline([[start.lat, start.lng], [end.lat, end.lng]], { weight: 4, opacity: 0.7 }).addTo(this.map);
     this.map.fitBounds(this.routeControl.getBounds(), { padding: [20, 20] });
   }
 
   loadTarif() {
     this.apiService.getTarif().subscribe(
-      (res) => {
-        this.tarifs = res.data || [];
-      },
-      (err) => {
+      res => this.tarifs = res.data || [],
+      err => {
         console.error('Error loading tarif:', err);
         this.showAlert('Error', 'Gagal memuat daftar tarif.');
       }
     );
   }
 
+  // Method untuk pilih file
+  pilihFile() {
+    this.fileInput.nativeElement.click();
+  }
+
+  // Method handle file selection
+  onFileSelected(event: any) {
+    const file: File = event.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      this.showAlert('Error', 'Hanya file gambar yang diperbolehkan.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.showAlert('Error', 'Ukuran file maksimal 5MB.');
+      return;
+    }
+    this.selectedFile = file;
+  }
+
+  // Update method buatKiriman
   async buatKiriman() {
-    if (this.kirimanForm.invalid) {
-      this.showFormErrors();
+    if (this.kirimanForm.invalid || this.jarak === 0) {
       return;
     }
 
-    if (this.jarak === 0) {
-      this.showAlert('Error', 'Silakan pilih lokasi tujuan di peta terlebih dahulu.');
-      return;
-    }
-
-    const loading = await this.loadingController.create({
-      message: 'Membuat order...',
-      spinner: 'crescent'
-    });
+    const loading = await this.loadingController.create({ message: 'Membuat order...' });
     await loading.present();
 
-    // Tambahkan jarak_km ke form data
-    const formData = {
-      ...this.kirimanForm.value,
-      jarak_km: this.jarak
-    };
+    const formData = { ...this.kirimanForm.value, jarak_km: this.jarak };
 
     this.apiService.createPengiriman(formData).subscribe(
-      async (res) => {
+      async res => {
+        const pengirimanId = res.data.id;
+        if (this.selectedFile) {
+          await this.uploadBuktiPembayaran(pengirimanId);
+        }
         await loading.dismiss();
-        const nomorResi = res?.data?.nomor_resi || '-';
-        await this.showAlert('Sukses', `Order berhasil dibuat dengan nomor resi: ${nomorResi}`);
+        await this.showAlert('Sukses', `Order berhasil dibuat dengan nomor resi: ${res.data.nomor_resi}`);
         this.resetForm();
         this.router.navigate(['/tabs-pelanggan/riwayat']);
       },
-      async (err) => {
+      async err => {
         await loading.dismiss();
-        console.error('Error creating order:', err);
-        const message = err.error?.message || 'Gagal membuat order. Silakan coba lagi.';
-        await this.showAlert('Gagal', message);
+        this.showAlert('Gagal', err.error?.message || 'Gagal membuat order.');
       }
     );
   }
 
-  private showFormErrors() {
-    const errors = [];
-    const controls = this.kirimanForm.controls;
-
-    if (controls['nama_penerima'].errors) {
-      errors.push('• Nama penerima tidak valid (minimal 2 karakter)');
-    }
-    if (controls['telepon_penerima'].errors) {
-      errors.push('• Nomor telepon tidak valid (8-15 digit)');
-    }
-    if (controls['alamat_tujuan'].errors) {
-      errors.push('• Alamat tujuan tidak valid (minimal 10 karakter)');
-    }
-    if (controls['jenis_barang'].errors) {
-      errors.push('• Jenis barang tidak valid (minimal 2 karakter)');
-    }
-    if (controls['estimasi_berat'].errors) {
-      errors.push('• Estimasi berat tidak valid (0.1 - 1000 kg)');
-    }
-    if (controls['tarif_id'].errors) {
-      errors.push('• Silakan pilih jenis layanan');
-    }
-
-    this.showAlert('Form Tidak Valid', errors.join('\n'));
+  // Method upload bukti pembayaran
+  private async uploadBuktiPembayaran(pengirimanId: number) {
+    if (!this.selectedFile) return;
+    const data = new FormData();
+    data.append('pengiriman_id', pengirimanId.toString());
+    data.append('metode_pembayaran', 'transfer');
+    data.append('bukti_file', this.selectedFile);
+    return this.apiService.uploadBuktiPembayaran(data).toPromise();
   }
 
   private resetForm() {
     this.kirimanForm.reset();
     this.jarak = 0;
     this.estimasiTotal = 0;
-    
+    this.selectedFile = null;
+    if (this.fileInput.nativeElement) {
+      this.fileInput.nativeElement.value = '';
+    }
+
     // Reset map markers
     if (this.map) {
-      if (this.endMarker) {
-        this.map.removeLayer(this.endMarker);
-        this.endMarker = null;
-      }
-      if (this.routeControl) {
-        this.map.removeLayer(this.routeControl);
-        this.routeControl = null;
-      }
-      
-      // Reset map view to default location
+      if (this.endMarker) { this.map.removeLayer(this.endMarker); this.endMarker = null; }
+      if (this.routeControl) { this.map.removeLayer(this.routeControl); this.routeControl = null; }
       this.map.setView([this.defaultLat, this.defaultLng], 13);
     }
   }
@@ -390,3 +288,4 @@ export class BuatKirimanPage implements OnInit, OnDestroy {
     await alert.present();
   }
 }
+  

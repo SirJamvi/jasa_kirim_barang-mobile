@@ -112,7 +112,7 @@ export class LacakKirimanPage implements OnInit, OnDestroy {
       console.warn('Koordinat tidak valid, menggunakan koordinat default Jakarta');
       
       // Gunakan koordinat default (Jakarta) jika koordinat tidak valid
-      this.initMapWithCoordinates(-6.2088, 106.8456, 'Lokasi tidak tersedia - Menampilkan Jakarta');
+      this.initMapWithCoordinates(-6.3204, 107.3236, ' Menampilkan Jakarta');
       return;
     }
 
@@ -245,93 +245,16 @@ export class LacakKirimanPage implements OnInit, OnDestroy {
     );
   }
 
-  // 1. Fungsi untuk memicu input file
-  pilihFile() {
-    if (this.fileInput?.nativeElement) {
-      this.fileInput.nativeElement.click();
-    }
-  }
-
-  // 2. Fungsi untuk menangani file yang dipilih
-  async onFileSelected(event: any) {
-    const file: File = event.target.files[0];
-    if (!file) {
-      return;
-    }
-
-    // Validasi file
-    if (!file.type.startsWith('image/')) {
-      this.showAlert('Error', 'Hanya file gambar yang diperbolehkan.');
-      return;
-    }
-
-    // Validasi ukuran file (maksimal 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      this.showAlert('Error', 'Ukuran file maksimal 5MB.');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('pengiriman_id', this.pengirimanDetail.id.toString());
-    formData.append('metode_pembayaran', 'transfer');
-    formData.append('bukti_file', file, file.name);
-
-    const loading = await this.loadingController.create({ message: 'Mengunggah...' });
-    await loading.present();
-
-    this.apiService.uploadBuktiPembayaran(formData).subscribe(
-      async res => {
-        console.log('API Response (Sukses):', res);
-        await loading.dismiss();
-        this.showAlert('Sukses', 'Bukti pembayaran berhasil diunggah.');
-        this.loadData(); // Muat ulang data
-        
-        // Reset input file
-        if (this.fileInput?.nativeElement) {
-          this.fileInput.nativeElement.value = '';
-        }
-      },
-      async err => {
-        console.log('API Response (Error):', err);
-        await loading.dismiss();
-        
-        let message = 'Gagal mengunggah bukti pembayaran.';
-        if (err.error?.message) {
-          message = err.error.message;
-        } else if (err.error?.errors) {
-          message = 'Data tidak valid. Periksa file yang diunggah.';
-        }
-        
-        this.showAlert('Gagal', message);
-        
-        // Reset input file
-        if (this.fileInput?.nativeElement) {
-          this.fileInput.nativeElement.value = '';
-        }
-      }
-    );
-  }
-
   // ✅ BARU: Fungsi untuk cek apakah ada bukti kirim
   hasBuktiKirim(): boolean {
-    return this.pengirimanDetail && 
-           (this.pengirimanDetail.bukti_kirim_path || this.pengirimanDetail.bukti_kirim);
+    // Cukup cek properti bukti_kirim yang sudah berisi URL lengkap
+    return this.pengirimanDetail && !!this.pengirimanDetail.bukti_kirim;
   }
 
-  // ✅ BARU: Fungsi untuk mendapatkan URL bukti kirim
+  // ✅ SOLUSI: Sederhanakan fungsi ini
   getBuktiKirimUrl(): string {
-    if (!this.pengirimanDetail) return '';
-    
-    // Prioritaskan bukti_kirim (accessor dari model), fallback ke bukti_kirim_path
-    if (this.pengirimanDetail.bukti_kirim) {
-      return this.pengirimanDetail.bukti_kirim;
-    }
-    
-    if (this.pengirimanDetail.bukti_kirim_path) {
-      return `https://your-api-domain.com/storage/${this.pengirimanDetail.bukti_kirim_path}`;
-    }
-    
-    return '';
+    // Langsung kembalikan URL dari backend. Tidak perlu fallback lagi.
+    return this.pengirimanDetail?.bukti_kirim || '';
   }
 
   // ✅ BARU: Fungsi untuk melihat bukti kirim dalam modal

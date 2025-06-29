@@ -267,3 +267,16 @@ form {
     color: var(--ion-color-medium);
   }
 }
+
+.payment-section {
+  margin-top: 24px;
+}
+
+.payment-card {
+  border: 2px solid var(--ion-color-success);
+  border-radius: 16px;
+}
+
+.file-info {
+  margin-top: 12px;
+}
