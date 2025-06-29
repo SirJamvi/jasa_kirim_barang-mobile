@@ -48,6 +48,46 @@
       </ion-card-content>
     </ion-card>
 
+    <!-- ✅ BARU: Bukti Pengiriman dari Kurir -->
+    <div *ngIf="hasBuktiKirim()">
+      <ion-list-header>Bukti Pengiriman</ion-list-header>
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>
+            <ion-icon name="document-text-outline" slot="start"></ion-icon>
+            Bukti Pengiriman dari Kurir
+          </ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <img 
+            [src]="getBuktiKirimUrl()" 
+            alt="Bukti Pengiriman" 
+            style="width: 100%; height: auto; max-height: 300px; object-fit: contain; border-radius: 8px; border: 1px solid #ddd;"
+            (error)="onBuktiImageError($event)"
+            (click)="viewBuktiKirim()">
+          <ion-chip color="success" class="ion-margin-top">
+            <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+            <ion-label>Paket telah diterima</ion-label>
+          </ion-chip>
+          <p class="ion-margin-top">
+            <small>Klik gambar untuk memperbesar</small>
+          </p>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- ✅ BARU: Status jika belum ada bukti kirim -->
+    <div *ngIf="!hasBuktiKirim() && pengirimanDetail.status_pengiriman !== 'Menunggu Penjemputan'">
+      <ion-list-header>Status Pengiriman</ion-list-header>
+      <ion-card>
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="time-outline" size="large" color="warning"></ion-icon>
+          <h3>{{ pengirimanDetail.status_pengiriman }}</h3>
+          <p>Paket sedang dalam proses pengiriman</p>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
     <ion-list-header>Pelacakan Lokasi</ion-list-header>
     <div 
       id="map" 
@@ -87,5 +127,15 @@
     height: 100%;
     color: #666;
     font-style: italic;
+  }
+
+  /* Style untuk gambar bukti kirim */
+  ion-card img {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+
+  ion-card img:hover {
+    transform: scale(1.02);
   }
 </style>

@@ -2,7 +2,7 @@
 
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { LoadingController, AlertController } from '@ionic/angular';
+import { LoadingController, AlertController, ModalController } from '@ionic/angular';
 import { ApiService } from 'src/app/services/api.service';
 import { Subscription, interval } from 'rxjs';
 
@@ -30,7 +30,8 @@ export class LacakKirimanPage implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private apiService: ApiService,
     private loadingController: LoadingController,
-    private alertController: AlertController
+    private alertController: AlertController,
+    private modalController: ModalController
   ) {}
 
   ngOnInit() {
@@ -234,6 +235,9 @@ export class LacakKirimanPage implements OnInit, OnDestroy {
             console.log('Posisi marker diperbarui:', { newLat, newLng });
           }
         }
+
+        // ✅ BARU: Update data pengiriman untuk bukti kirim terbaru
+        this.pengirimanDetail = res.data;
       },
       err => {
         console.error('Gagal memperbarui lokasi kurir:', err);
@@ -306,6 +310,55 @@ export class LacakKirimanPage implements OnInit, OnDestroy {
         }
       }
     );
+  }
+
+  // ✅ BARU: Fungsi untuk cek apakah ada bukti kirim
+  hasBuktiKirim(): boolean {
+    return this.pengirimanDetail && 
+           (this.pengirimanDetail.bukti_kirim_path || this.pengirimanDetail.bukti_kirim);
+  }
+
+  // ✅ BARU: Fungsi untuk mendapatkan URL bukti kirim
+  getBuktiKirimUrl(): string {
+    if (!this.pengirimanDetail) return '';
+    
+    // Prioritaskan bukti_kirim (accessor dari model), fallback ke bukti_kirim_path
+    if (this.pengirimanDetail.bukti_kirim) {
+      return this.pengirimanDetail.bukti_kirim;
+    }
+    
+    if (this.pengirimanDetail.bukti_kirim_path) {
+      return `https://your-api-domain.com/storage/${this.pengirimanDetail.bukti_kirim_path}`;
+    }
+    
+    return '';
+  }
+
+  // ✅ BARU: Fungsi untuk melihat bukti kirim dalam modal
+  async viewBuktiKirim() {
+    const alert = await this.alertController.create({
+      header: 'Bukti Pengiriman',
+      message: `
+        <div style="text-align: center;">
+          <img src="${this.getBuktiKirimUrl()}" 
+               style="max-width: 100%; max-height: 400px; border-radius: 8px;" 
+               alt="Bukti Pengiriman" />
+          <p style="margin-top: 10px; font-size: 12px; color: #666;">
+            Paket telah diterima oleh penerima
+          </p>
+        </div>
+      `,
+      buttons: ['Tutup'],
+      cssClass: 'bukti-kirim-modal'
+    });
+    await alert.present();
+  }
+
+  // ✅ BARU: Handler untuk gambar bukti kirim error
+  onBuktiImageError(event: any) {
+    console.error('Error loading bukti kirim image:', event);
+    event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkJ1a3RpIFRpZGFrIERpdGVtdWthbjwvdGV4dD48L3N2Zz4=';
+    event.target.alt = 'Bukti pengiriman tidak dapat dimuat';
   }
 
   async showAlert(header: string, message: string) {
